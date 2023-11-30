@@ -183,6 +183,10 @@ class CLIP_ConvNeXt_base_patch32(CLIPBaseModel):
         I_e = self.clip.visual_projection(I_f)
         T_e = self.clip.text_projection(T_f['pooler_output'])
     
+        # L2 Normalization for each embeddings
+        I_e = nn.functional.normalize(I_e, p=2)
+        T_e = nn.functional.normalize(T_e, p=2)
+    
         # scaled pairwise cosine similarities [n, n]
         logits = self.hparams['temperature'] * torch.matmul(I_e,  T_e.T)
         
@@ -231,7 +235,6 @@ class CLIP_ConvNeXt_base_patch32(CLIPBaseModel):
             nn.LayerNorm(1024),
             nn.Dropout1d(),
             nn.Linear(1024, 512, bias=True),
-            nn.LayerNorm(512),
         )
         
 class CLIP_ResNet50_large_patch14(CLIPBaseModel):
@@ -254,8 +257,6 @@ class CLIP_ResNet50_large_patch14(CLIPBaseModel):
         inputs = self.processor(text=self.descs, images=imgs, return_tensors='pt', padding=True)
         inputs = inputs.to('cuda')
         
-        print(imgs[0].mean(), imgs[0].std())
-        
         I_f = self.clip.vision_model(inputs["pixel_values"]) # we are not using processor's output
         T_f = self.clip.text_model(inputs["input_ids"])
         
@@ -263,6 +264,10 @@ class CLIP_ResNet50_large_patch14(CLIPBaseModel):
         # # joint multimodal embedding [n, d_e]
         I_e = self.clip.visual_projection(I_f) # ViT uses I_f['pooler_output'] but not custom cnn models
         T_e = self.clip.text_projection(T_f['pooler_output'])
+    
+        # L2 Normalization for each embeddings
+        I_e = nn.functional.normalize(I_e, p=2)
+        T_e = nn.functional.normalize(T_e, p=2)
     
         # scaled pairwise cosine similarities [n, n]
         logits = self.hparams['temperature'] * torch.matmul(I_e,  T_e.T)
@@ -309,5 +314,4 @@ class CLIP_ResNet50_large_patch14(CLIPBaseModel):
             nn.LayerNorm(1024),
             nn.Dropout1d(),
             nn.Linear(1024, 768, bias=True), # T_e.shape: [batch size, 768]
-            nn.LayerNorm(768),
         )

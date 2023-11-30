@@ -51,16 +51,21 @@ class CLIPBaseModel(pl.LightningModule):
         self.valid_f1 = F1Score(task="multiclass", num_classes=self.num_classes, average='weighted')
     
     def forward(self, imgs):
+        # should be modified to use only text processor
         inputs = self.processor(text=self.descs, images=imgs, return_tensors='pt', padding=True)
         inputs = inputs.to('cuda')
         
-        I_f = self.clip.vision_model(inputs["pixel_values"]) # we are not using processor's output
+        I_f = self.clip.vision_model(imgs) # Since imgs are preprocesses, we don't use inputs['pixel_values']
         T_f = self.clip.text_model(inputs["input_ids"])
         
         logits_fc = self.fc_layer(I_f['pooler_output'])
-        # # joint multimodal embedding [n, d_e]
+        # joint multimodal embedding [n, d_e]
         I_e = self.clip.visual_projection(I_f['pooler_output'])
         T_e = self.clip.text_projection(T_f['pooler_output'])
+    
+        # L2 Normalization for each embeddings
+        I_e = nn.functional.normalize(I_e, p=2)
+        T_e = nn.functional.normalize(T_e, p=2)
     
         # scaled pairwise cosine similarities [n, n]
         logits = self.hparams['temperature'] * torch.matmul(I_e,  T_e.T)
@@ -162,6 +167,7 @@ class CLIPBaseModel(pl.LightningModule):
         for i, logits_row in enumerate(logits):
             for j, value in enumerate(logits_row):
                 logits_canvas[0, i, j] = value.item()
+                
         print(logits_canvas)
                 
         tensorboard.add_image("text embeddings", T_e_canvas, batch_idx)
