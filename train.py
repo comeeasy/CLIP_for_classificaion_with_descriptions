@@ -21,9 +21,9 @@ if __name__ == "__main__":
     #########################################
     # Select model
     #########################################
-    model = CLIP_ViT_base_patch32()
+    # model = CLIP_ViT_base_patch32()
     # model = CLIP_ViT_large_patch14()
-    # model = CLIP_ConvNeXt_large_patch14()
+    model = CLIP_ConvNeXt_large_patch14()
     # model = CLIP_ConvNeXt_base_patch32()
     # model = CLIP_ResNet50_large_patch14()
     #########################################

@@ -168,8 +168,6 @@ class CLIPBaseModel(pl.LightningModule):
             for j, value in enumerate(logits_row):
                 logits_canvas[0, i, j] = value.item()
                 
-        print(logits_canvas)
-                
         tensorboard.add_image("text embeddings", T_e_canvas, batch_idx)
         tensorboard.add_image("image embeddings", I_e_canvas, batch_idx)
         tensorboard.add_image("logits", logits_canvas, batch_idx)

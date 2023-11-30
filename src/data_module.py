@@ -67,7 +67,7 @@ class DataModuleForCLIP(LightningDataModule):
         self.train_transforms=train_transforms
         self.val_transforms=val_transforms
     
-    def setup(self, stage: str) -> None:
+    def setup(self, stage: str="None") -> None:
         class_desc_dict = read_class_description()
         train_class_img_paths_dict = {}
         val_class_img_paths_dict = {}

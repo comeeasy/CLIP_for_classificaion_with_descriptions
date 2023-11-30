@@ -64,5 +64,10 @@ def figure_to_array(fig):
     fig.canvas.draw()
     return np.array(fig.canvas.renderer._renderer)
 
+def read_hparams(hparam_path) -> dict:
+    with open(hparam_path, "r") as f:
+        data = yaml.full_load(f)
+    return data
+
 if __name__ == "__main__":
     print("hello world")
