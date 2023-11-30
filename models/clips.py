@@ -230,7 +230,8 @@ class CLIP_ConvNeXt_base_patch32(CLIPBaseModel):
             nn.GELU(),
             nn.LayerNorm(1024),
             nn.Dropout1d(),
-            nn.Linear(1024, 512, bias=True)
+            nn.Linear(1024, 512, bias=True),
+            nn.LayerNorm(512),
         )
         
 class CLIP_ResNet50_large_patch14(CLIPBaseModel):
@@ -307,5 +308,6 @@ class CLIP_ResNet50_large_patch14(CLIPBaseModel):
             nn.GELU(),
             nn.LayerNorm(1024),
             nn.Dropout1d(),
-            nn.Linear(1024, 768, bias=True) # T_e.shape: [batch size, 768]
+            nn.Linear(1024, 768, bias=True), # T_e.shape: [batch size, 768]
+            nn.LayerNorm(768),
         )
