@@ -44,6 +44,9 @@ class CLIPBaseModel(pl.LightningModule):
         
         self.hparams['temperature'] = CFG.temperature
         self.hparams["class_label"] = {cls: label for label, cls in enumerate(self.class_descs)}
+        self.hparams['img_size_H'] = CFG.img_transform_size_H
+        self.hparams['img_size_W'] = CFG.img_transform_size_W
+        self.hparams['test_size'] = CFG.test_size
         
         # metrics
         self.train_acc = Accuracy(task="multiclass", num_classes=self.num_classes)
