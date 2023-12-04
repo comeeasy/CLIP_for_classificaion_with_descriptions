@@ -21,9 +21,9 @@ if __name__ == "__main__":
     #########################################
     # Select model
     #########################################
-    # model = CLIP_ViT_base_patch32()
+    model = CLIP_ViT_base_patch32()
     # model = CLIP_ViT_large_patch14()
-    model = CLIP_ConvNeXt_large_patch14()
+    # model = CLIP_ConvNeXt_large_patch14()
     # model = CLIP_ConvNeXt_base_patch32()
     # model = CLIP_ResNet50_large_patch14()
     #########################################
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     )
     
     checkpoint_callback = ModelCheckpoint(
-        monitor='val_F1Score',
+        monitor='val/F1Score',
         mode="max",
         filename='wallpaper_fault-{epoch:02d}-{val_F1Score:.2f}',
         save_last=True,
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     )
     
     trainer = pl.Trainer(
-        max_epochs=200, 
+        max_epochs=1000, 
         devices="auto", 
         callbacks=[checkpoint_callback], 
         strategy=DDPStrategy(find_unused_parameters=True), 
