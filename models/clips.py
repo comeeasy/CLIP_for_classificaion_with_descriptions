@@ -47,7 +47,7 @@ class CLIP_ViT_large_patch14(CLIPBaseModel):
     def __init__(self) -> None:
         super().__init__()
         self.clip, self.processor = self.get_clip_model_preprocessor("openai/clip-vit-large-patch14")
-        self.fc_layer = self.add_fc_layer()
+        self.fc_layer = self.build_fc_layer()
         
         # freeze modules lock or unlock comments if you want 
         self.freeze_module(self.clip.text_model)
@@ -55,7 +55,7 @@ class CLIP_ViT_large_patch14(CLIPBaseModel):
         # save hyperparameters to hparams.yaml
         self.save_hyperparameters()
 
-    def add_fc_layer(self):
+    def build_fc_layer(self):
         fc_layer = nn.Sequential(
             nn.Linear(1024, 1024, bias=False),
             nn.GELU(),
@@ -106,6 +106,10 @@ class CLIP_ConvNeXt_large_patch14(CLIPBaseModel):
         # # joint multimodal embedding [n, d_e]
         I_e = self.clip.visual_projection(I_f)
         T_e = self.clip.text_projection(T_f['pooler_output'])
+    
+        # L2 Normalization for each embeddings
+        I_e = nn.functional.normalize(I_e, p=2)
+        T_e = nn.functional.normalize(T_e, p=2)
     
         # scaled pairwise cosine similarities [n, n]
         logits = self.hparams['temperature'] * torch.matmul(I_e,  T_e.T)
