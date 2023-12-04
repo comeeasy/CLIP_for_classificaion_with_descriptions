@@ -3,11 +3,11 @@ import numpy as np
 import lightning.pytorch as pl
 
 import torch
-from torch import optim, nn
+from torch import nn
 from torchmetrics.classification import Accuracy, F1Score
 
 from src.utils import read_class_description
-from transformers import CLIPProcessor, CLIPModel
+from transformers import CLIPModel, CLIPTokenizer
 
 from cfg import CFG
 
@@ -55,7 +55,7 @@ class CLIPBaseModel(pl.LightningModule):
     
     def forward(self, imgs):
         # should be modified to use only text processor
-        inputs = self.processor(text=self.descs, images=imgs, return_tensors='pt', padding=True)
+        inputs = self.processor(text=self.descs, return_tensors='pt', padding=True)
         inputs = inputs.to('cuda')
         
         I_f = self.clip.vision_model(imgs) # Since imgs are preprocesses, we don't use inputs['pixel_values']
@@ -87,7 +87,9 @@ class CLIPBaseModel(pl.LightningModule):
         loss = self.calculate_total_loss(sim_loss=sim_loss, fc_loss=fc_loss)
         
         self.logging_embeddings_and_logits_to_tensorboard(logits=logits, outputs=outputs, batch_idx=batch_idx)
-        self.log("train_loss", loss, sync_dist=True)
+        self.log("train/total_loss", loss, sync_dist=True)
+        self.log("train/similarity_loss", sim_loss, sync_dist=True)
+        self.log("train/classification_loss", fc_loss, sync_dist=True)
         
         return loss
     
@@ -104,9 +106,12 @@ class CLIPBaseModel(pl.LightningModule):
         fc_target = torch.arange(len(self.descs)).to('cuda')
         val_acc = self.valid_acc(logits_fc, fc_target)
         val_f1 = self.valid_f1(logits_fc, fc_target)
-        self.log("val_loss", loss, on_epoch=True, sync_dist=True)
-        self.log("val_F1Score", val_f1, on_epoch=True, sync_dist=True)
-        self.log("val_accuracy", val_acc, on_epoch=True, sync_dist=True)
+        
+        self.log("val/total_loss", loss, sync_dist=True)
+        self.log("val/similarity_loss", sim_loss, sync_dist=True)
+        self.log("val/classification_loss", fc_loss, sync_dist=True)
+        self.log("val/F1Score", val_f1, on_epoch=True, sync_dist=True)
+        self.log("val/accuracy", val_acc, on_epoch=True, sync_dist=True)
     
     def test_step(self, batch, batch_idx):
         assert batch.shape[0] == 1 # for now, batch-size is limited to 1.
@@ -126,7 +131,7 @@ class CLIPBaseModel(pl.LightningModule):
     
     def get_clip_model_preprocessor(self, url):
         clip = CLIPModel.from_pretrained(url)
-        processor = CLIPProcessor.from_pretrained(url)
+        processor = CLIPTokenizer.from_pretrained(url)
         return clip, processor
     
     def calculate_symmetric_loss(self, logits):
